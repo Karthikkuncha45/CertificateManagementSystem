@@ -254,7 +254,7 @@
                                         </td>
                                         <td th:text="${#temporals.format(cert.issueDate, 'dd-MM-yyyy')}"></td>
                                         <td>
-                                            <a th:href="@{'/admin/download/' + ${cert.id}}" class="btn btn-sm btn-outline-primary">
+                                            <a th:href="@{'/admin/download/' + ${certificate.cloudinaryUrl}}" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-download"></i>
                                             </a>
                                         </td>

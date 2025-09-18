@@ -4,18 +4,12 @@ import com.yourorg.certificatesystem.dto.*;
 import com.yourorg.certificatesystem.entity.*;
 import com.yourorg.certificatesystem.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,8 +20,6 @@ public class AdminController {
 
     @Autowired
     private CertificateService certificateService;
-
-    private final String uploadDir = "uploads/certificates/";
 
     @GetMapping("/dashboard")
     public String adminDashboard(Model model) {
@@ -40,7 +32,7 @@ public class AdminController {
                         cert.getTitle(),
                         cert.getPercentage(),
                         cert.getIssueDate(),
-                        cert.getFileName(),
+                        cert.getCloudinaryUrl(), // Use Cloudinary URL instead of file name
                         cert.getUser().getFullName(),
                         cert.getUser().getRollNumber(),
                         cert.getUser().getBranch(),
@@ -79,7 +71,7 @@ public class AdminController {
                         cert.getTitle(),
                         cert.getPercentage(),
                         cert.getIssueDate(),
-                        cert.getFileName(),
+                        cert.getCloudinaryUrl(), // Use Cloudinary URL instead of file name
                         cert.getUser().getFullName(),
                         cert.getUser().getRollNumber(),
                         cert.getUser().getBranch(),
@@ -90,25 +82,15 @@ public class AdminController {
     }
 
     @GetMapping("/download/{id}")
-    public ResponseEntity<Resource> downloadCertificate(@PathVariable Long id) {
+    public String downloadCertificate(@PathVariable Long id) {
         try {
             Certificate certificate = certificateService.getCertificateById(id)
                     .orElseThrow(() -> new RuntimeException("Certificate not found"));
-
-            Path filePath = Paths.get(uploadDir).resolve(certificate.getFileName()).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (resource.exists()) {
-                return ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, 
-                               "attachment; filename=\"" + certificate.getFileName() + "\"")
-                        .body(resource);
-            } else {
-                throw new RuntimeException("File not found");
-            }
+            
+            // Redirect to Cloudinary URL instead of serving file directly
+            return "redirect:" + certificate.getCloudinaryUrl();
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return "redirect:/admin/dashboard?error=download-failed";
         }
     }
 }

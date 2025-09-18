@@ -7,7 +7,7 @@ public class CertificateDto {
     private String title;
     private Double percentage;
     private LocalDate issueDate;
-    private String fileName;
+    private String cloudinaryUrl;
     private String studentName;
     private String rollNumber;
     private String branch;
@@ -18,13 +18,14 @@ public class CertificateDto {
     public CertificateDto() {}
 
     public CertificateDto(Long id, String title, Double percentage, LocalDate issueDate, 
-                         String fileName, String studentName, String rollNumber, 
-                         String branch, Integer year, String section) {
+            String cloudinaryUrl, String studentName, String rollNumber, 
+            String branch, Integer year, String section) {
+
         this.id = id;
         this.title = title;
         this.percentage = percentage;
         this.issueDate = issueDate;
-        this.fileName = fileName;
+        this.cloudinaryUrl = cloudinaryUrl;
         this.studentName = studentName;
         this.rollNumber = rollNumber;
         this.branch = branch;
@@ -32,7 +33,15 @@ public class CertificateDto {
         this.section = section;
     }
 
-    // Getters and Setters
+    public String getCloudinaryUrl() {
+		return cloudinaryUrl;
+	}
+
+	public void setCloudinaryUrl(String cloudinaryUrl) {
+		this.cloudinaryUrl = cloudinaryUrl;
+	}
+
+	// Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -45,8 +54,6 @@ public class CertificateDto {
     public LocalDate getIssueDate() { return issueDate; }
     public void setIssueDate(LocalDate issueDate) { this.issueDate = issueDate; }
 
-    public String getFileName() { return fileName; }
-    public void setFileName(String fileName) { this.fileName = fileName; }
 
     public String getStudentName() { return studentName; }
     public void setStudentName(String studentName) { this.studentName = studentName; }

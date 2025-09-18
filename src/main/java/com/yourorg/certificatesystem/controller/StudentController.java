@@ -2,13 +2,7 @@ package com.yourorg.certificatesystem.controller;
 
 import com.yourorg.certificatesystem.entity.*;
 import com.yourorg.certificatesystem.service.*;
-import com.yourorg.certificatesystem.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,8 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -32,7 +24,8 @@ public class StudentController {
     @Autowired
     private UserService userService;
 
-    private final String uploadDir = "uploads/certificates/";
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     @GetMapping("/dashboard")
     public String studentDashboard(Authentication authentication, Model model) {
@@ -76,27 +69,51 @@ public class StudentController {
         return "student/upload";
     }
 
- // Remove FileUploadUtil imports and usage
-
     @PostMapping("/upload")
     public String uploadCertificate(@ModelAttribute Certificate certificate,
                                   @RequestParam("file") MultipartFile file,
                                   Authentication authentication,
                                   RedirectAttributes redirectAttributes) {
-        // ... validation code ...
+        
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Please select a file to upload");
+            return "redirect:/student/upload";
+        }
+
+        // Validate file type
+        String contentType = file.getContentType();
+        if (!isValidFileType(contentType)) {
+            redirectAttributes.addFlashAttribute("error", "Only PDF, JPG, and PNG files are allowed");
+            return "redirect:/student/upload";
+        }
+
+        // Validate file size (5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            redirectAttributes.addFlashAttribute("error", "File size must not exceed 5MB");
+            return "redirect:/student/upload";
+        }
+
         try {
             User user = userService.findByRollNumber(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            // Upload file to Cloudinary
+            String cloudinaryUrl = cloudinaryService.uploadFile(file);
+            
             certificate.setUser(user);
-            certificateService.saveCertificate(certificate, file);
+            certificate.setCloudinaryUrl(cloudinaryUrl);
+            
+            certificateService.saveCertificate(certificate);
+            
             redirectAttributes.addFlashAttribute("success", "Certificate uploaded successfully!");
+            return "redirect:/student/dashboard";
+            
         } catch (IOException e) {
             redirectAttributes.addFlashAttribute("error", "Failed to upload file: " + e.getMessage());
+            return "redirect:/student/upload";
         }
-        return "redirect:/student/dashboard";
     }
 
-    // Update download method to redirect to Cloudinary URL
     @GetMapping("/download/{id}")
     public String downloadCertificate(@PathVariable Long id, Authentication authentication) {
         Certificate certificate = certificateService.getCertificateById(id)
@@ -148,11 +165,9 @@ public class StudentController {
                     return "redirect:/student/edit/" + id;
                 }
                 
-                // Delete old file and save new one
-                FileUploadUtil.deleteFile(uploadDir, existingCertificate.getFileName());
-                String newFileName = FileUploadUtil.saveFile(uploadDir, file);
-                existingCertificate.setFileName(newFileName);
-                existingCertificate.setFilePath(uploadDir + newFileName);
+                // Upload new file to Cloudinary
+                String newCloudinaryUrl = cloudinaryService.uploadFile(file);
+                existingCertificate.setCloudinaryUrl(newCloudinaryUrl);
             }
             
             certificateService.saveCertificate(existingCertificate);
@@ -178,7 +193,7 @@ public class StudentController {
         }
         
         try {
-            FileUploadUtil.deleteFile(uploadDir, certificate.getFileName());
+            // Delete from database
             certificateService.deleteCertificate(id);
             redirectAttributes.addFlashAttribute("success", "Certificate deleted successfully!");
         } catch (Exception e) {
@@ -187,8 +202,6 @@ public class StudentController {
         
         return "redirect:/student/dashboard";
     }
-
-    
 
     private boolean isValidFileType(String contentType) {
         return contentType != null && (
