@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification - Certificate Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .otp-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 3rem;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .otp-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            color: white;
+            font-size: 3rem;
+        }
+        
+        .otp-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 2rem 0;
+        }
+        
+        .otp-input {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .otp-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-gradient {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .resend-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .resend-link:hover {
+            color: #5a67d8;
+            text-decoration: underline;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .timer {
+            font-weight: bold;
+            color: #dc3545;
+        }
+
+        .email-display {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #495057;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="otp-card">
+        <div class="otp-icon">
+            <i class="bi bi-shield-check" th:if="${type == 'reset'}"></i>
+            <i class="bi bi-person-check" th:unless="${type == 'reset'}"></i>
+        </div>
+        
+        <h2 class="mb-3">
+            <span th:if="${type == 'reset'}">Reset Password</span>
+            <span th:unless="${type == 'reset'}">Account Verification</span>
+        </h2>
+        
+        <p class="text-muted mb-4">
+            <span th:if="${type == 'reset'}">Enter the OTP sent to your email to reset your password</span>
+            <span th:unless="${type == 'reset'}">Enter the OTP sent to your email to complete registration</span>
+        </p>
+
+        <div class="email-display" th:text="${email}">user@example.com</div>
+
+        <!-- Alert Messages -->
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}"></span>
+        </div>
+
+        <!-- OTP Form -->
+        <form th:action="@{/verify-otp}" method="post" id="otpForm">
+            <input type="hidden" name="email" th:value="${email}">
+            <input type="hidden" name="type" th:value="${type}">
+            
+            <div class="otp-inputs">
+                <input type="text" class="form-control otp-input" maxlength="1" pattern="[0-9]" required>
+                <input type="text" class="form-control otp-input" maxlength="1" pattern="[0-9]" required>
+                <input type="text" class="form-control otp-input" maxlength="1" pattern="[0-9]" required>
+                <input type="text" class="form-control otp-input" maxlength="1" pattern="[0-9]" required>
+                <input type="text" class="form-control otp-input" maxlength="1" pattern="[0-9]" required>
+                <input type="text" class="form-control otp-input" maxlength="1" pattern="[0-9]" required>
+            </div>
+            
+            <input type="hidden" name="otp" id="otpValue">
+            
+            <button type="submit" class="btn btn-gradient mb-3">
+                <i class="bi bi-check-circle me-2"></i>Verify OTP
+            </button>
+        </form>
+
+        <!-- Timer and Resend -->
+        <div class="mt-4">
+            <p class="mb-2">
+                OTP expires in: <span class="timer" id="timer">10:00</span>
+            </p>
+            
+            <p class="mb-0">
+                Didn't receive the OTP? 
+                <a href="#" class="resend-link" id="resendOtp">Resend OTP</a>
+            </p>
+        </div>
+
+        <!-- Back to Login -->
+        <div class="mt-4">
+            <a th:href="@{/login}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Login
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // OTP input handling
+        const otpInputs = document.querySelectorAll('.otp-input');
+        const otpValue = document.getElementById('otpValue');
+        
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value;
+                
+                // Only allow numbers
+                if (!/^[0-9]$/.test(value)) {
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Move to next input
+                if (value && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+                
+                // Update hidden field
+                updateOtpValue();
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                // Handle backspace
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+                
+                // Handle paste
+                if (e.key === 'v' && e.ctrlKey) {
+                    e.preventDefault();
+                    navigator.clipboard.readText().then(text => {
+                        const numbers = text.replace(/\D/g, '').slice(0, 6);
+                        numbers.split('').forEach((digit, i) => {
+                            if (otpInputs[i]) {
+                                otpInputs[i].value = digit;
+                            }
+                        });
+                        updateOtpValue();
+                        if (numbers.length === 6) {
+                            document.getElementById('otpForm').submit();
+                        }
+                    });
+                }
+            });
+        });
+        
+        function updateOtpValue() {
+            const otp = Array.from(otpInputs).map(input => input.value).join('');
+            otpValue.value = otp;
+            
+            // Auto-submit when 6 digits entered
+            if (otp.length === 6) {
+                setTimeout(() => {
+                    document.getElementById('otpForm').submit();
+                }, 500);
+            }
+        }
+        
+        // Timer countdown
+        let timeLeft = 600; // 10 minutes in seconds
+        const timerDisplay = document.getElementById('timer');
+        
+        const countdown = setInterval(() => {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            
+            timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerDisplay.textContent = 'Expired';
+                timerDisplay.classList.add('text-danger');
+                
+                // Disable form
+                otpInputs.forEach(input => input.disabled = true);
+                document.querySelector('button[type="submit"]').disabled = true;
+            }
+            
+            timeLeft--;
+        }, 1000);
+        
+        // Resend OTP
+        document.getElementById('resendOtp').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const email = '[[${email}]]';
+            
+            fetch('/resend-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'email=' + encodeURIComponent(email)
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data === 'success') {
+                    alert('OTP resent successfully!');
+                    
+                    // Reset timer
+                    timeLeft = 600;
+                    timerDisplay.classList.remove('text-danger');
+                    
+                    // Enable form
+                    otpInputs.forEach(input => {
+                        input.disabled = false;
+                        input.value = '';
+                    });
+                    document.querySelector('button[type="submit"]').disabled = false;
+                    otpInputs[0].focus();
+                } else {
+                    alert('Failed to resend OTP. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to resend OTP. Please try again.');
+            });
+        });
+        
+        // Focus first input on load
+        otpInputs[0].focus();
+    </script>
+</body>
+</html>

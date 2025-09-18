@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Certificate - Certificate Management System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .edit-container {
+            padding: 40px 0;
+        }
+        .edit-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .current-file {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .file-upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .btn-update {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container edit-container">
+        <div class="edit-card">
+            <div class="text-center mb-4">
+                <i class="fas fa-edit fa-3x text-warning mb-3"></i>
+                <h2 class="fw-bold text-dark">Edit Certificate</h2>
+                <p class="text-muted">Update your certificate details</p>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <form th:action="@{'/student/edit/' + ${certificate.id}}" method="post" enctype="multipart/form-data" th:object="${certificate}">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" th:field="*{title}" placeholder="Certificate Title" required>
+                            <label><i class="fas fa-award me-2"></i>Certificate Title</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" th:field="*{percentage}" placeholder="Percentage" 
+                                   min="0" max="100" step="0.01" required>
+                            <label><i class="fas fa-percent me-2"></i>Percentage</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-floating">
+                    <input type="date" class="form-control" th:field="*{issueDate}" required>
+                    <label><i class="fas fa-calendar me-2"></i>Issue Date</label>
+                </div>
+
+                <div class="current-file">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-file text-primary me-2"></i>
+                        <div>
+                            <div class="fw-bold">Current File:</div>
+                            <small class="text-muted" th:text="${certificate.fileName}"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="file-upload-area" onclick="document.getElementById('fileInput').click();">
+                    <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
+                    <h6>Replace file (optional)</h6>
+                    <p class="text-muted mb-0 small">Click to select new file</p>
+                    <input type="file" id="fileInput" name="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+                </div>
+
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <div class="alert alert-info">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file me-2"></i>
+                            <div>
+                                <div class="fw-bold" id="fileName"></div>
+                                <small id="fileSize"></small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="removeFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 mt-4">
+                    <button type="submit" class="btn btn-update flex-fill">
+                        <i class="fas fa-save me-2"></i>Update Certificate
+                    </button>
+                    <a href="/student/dashboard" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+
+        fileInput.addEventListener('change', function() {
+            const file = fileInput.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                fileInfo.style.display = 'block';
+            }
+        });
+
+        function removeFile() {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

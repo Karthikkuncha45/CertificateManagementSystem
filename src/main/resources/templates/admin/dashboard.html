@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Certificate Management System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .sidebar {
+            background: white;
+            min-height: calc(100vh - 76px);
+            border-radius: 0 15px 15px 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .filter-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        .table-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .btn-filter {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            padding: 8px 20px;
+            font-weight: 500;
+        }
+        .btn-clear {
+            background: #6c757d;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            padding: 8px 20px;
+        }
+        .table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        .table td {
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .badge-percentage {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-bottom: 20px;
+                border-radius: 15px;
+                min-height: auto;
+            }
+            .table-responsive {
+                border-radius: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="fas fa-certificate me-2"></i>Certificate Portal - Admin
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <span sec:authentication="name"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar with Filters -->
+            <div class="col-lg-3 col-md-4">
+                <div class="sidebar">
+                    <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Filters</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Section</label>
+                        <select class="form-select" id="sectionFilter">
+                            <option value="">All Sections</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="E">E</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Year</label>
+                        <select class="form-select" id="yearFilter">
+                            <option value="">All Years</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Branch</label>
+                        <select class="form-select" id="branchFilter">
+							<option value="">Select Branch</option>
+							<option value="AIML">AIML</option>
+							<option value="CSE(AIML)">CSE(AIML)</option>
+							<option value="CSE(CS)">CSE(CS)</option>
+							<option value="CSE(DS)">CSE(DS)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" id="titleFilter" placeholder="Search by title...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Roll Number</label>
+                        <input type="text" class="form-control" id="rollNumberFilter" placeholder="Search by roll number...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Issue Date</label>
+                        <input type="date" class="form-control" id="issueDateFilter">
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">From Date</label>
+                            <input type="date" class="form-control" id="fromDateFilter">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control" id="toDateFilter">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Min %</label>
+                            <input type="number" class="form-control" id="minPercentageFilter" min="0" max="100" step="0.01">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Max %</label>
+                            <input type="number" class="form-control" id="maxPercentageFilter" min="0" max="100" step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-select" id="sortByFilter">
+                            <option value="">Default</option>
+                            <option value="rollnumber">Roll Number</option>
+                            <option value="percentage">Percentage</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Sort Order</label>
+                        <select class="form-select" id="sortOrderFilter">
+                            <option value="asc">Ascending</option>
+                            <option value="desc">Descending</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-filter" onclick="applyFilters()">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                        <button type="button" class="btn btn-clear" onclick="clearFilters()">
+                            <i class="fas fa-times me-2"></i>Clear All
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9 col-md-8">
+                <div class="main-content">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3><i class="fas fa-chart-bar me-2"></i>Certificate Dashboard</h3>
+                        <div class="badge bg-primary fs-6">
+                            <span id="totalCount" th:text="${#lists.size(certificates)}"></span> certificates
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="certificatesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Roll Number</th>
+                                        <th>Student Name</th>
+                                        <th>Branch</th>
+                                        <th>Year</th>
+                                        <th>Section</th>
+                                        <th>Title</th>
+                                        <th>Percentage</th>
+                                        <th>Issue Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="certificatesTableBody">
+                                    <tr th:each="cert : ${certificates}">
+                                        <td class="fw-bold" th:text="${cert.rollNumber}"></td>
+                                        <td th:text="${cert.studentName}"></td>
+                                        <td><span class="badge bg-info" th:text="${cert.branch}"></span></td>
+                                        <td th:text="${cert.year}"></td>
+                                        <td th:text="${cert.section}"></td>
+                                        <td th:text="${cert.title}"></td>
+                                        <td>
+                                            <span class="badge badge-percentage" th:text="${cert.percentage + '%'}"></span>
+                                        </td>
+                                        <td th:text="${#temporals.format(cert.issueDate, 'dd-MM-yyyy')}"></td>
+                                        <td>
+                                            <a th:href="@{'/admin/download/' + ${cert.id}}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function applyFilters() {
+            const filters = {
+                section: document.getElementById('sectionFilter').value,
+                year: document.getElementById('yearFilter').value,
+                branch: document.getElementById('branchFilter').value,
+                issueDate: document.getElementById('issueDateFilter').value,
+                fromDate: document.getElementById('fromDateFilter').value,
+                toDate: document.getElementById('toDateFilter').value,
+                title: document.getElementById('titleFilter').value,
+                minPercentage: document.getElementById('minPercentageFilter').value,
+                maxPercentage: document.getElementById('maxPercentageFilter').value,
+                rollNumber: document.getElementById('rollNumberFilter').value,
+                sortBy: document.getElementById('sortByFilter').value,
+                sortOrder: document.getElementById('sortOrderFilter').value
+            };
+
+            const params = new URLSearchParams();
+            Object.keys(filters).forEach(key => {
+                if (filters[key]) {
+                    params.append(key, filters[key]);
+                }
+            });
+
+            fetch(`/admin/filter-certificates?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateTable(data);
+                    document.getElementById('totalCount').textContent = data.length;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to apply filters');
+                });
+        }
+
+        function clearFilters() {
+            document.querySelectorAll('#sectionFilter, #yearFilter, #branchFilter, #issueDateFilter, #fromDateFilter, #toDateFilter, #titleFilter, #minPercentageFilter, #maxPercentageFilter, #rollNumberFilter, #sortByFilter').forEach(input => {
+                input.value = '';
+            });
+            document.getElementById('sortOrderFilter').value = 'asc';
+            applyFilters();
+        }
+
+        function updateTable(certificates) {
+            const tbody = document.getElementById('certificatesTableBody');
+            tbody.innerHTML = '';
+
+            if (certificates.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">No certificates found</td></tr>';
+                return;
+            }
+
+            certificates.forEach(cert => {
+                const row = `
+                    <tr>
+                        <td class="fw-bold">${cert.rollNumber}</td>
+                        <td>${cert.studentName}</td>
+                        <td><span class="badge bg-info">${cert.branch}</span></td>
+                        <td>${cert.year}</td>
+                        <td>${cert.section}</td>
+                        <td>${cert.title}</td>
+                        <td><span class="badge badge-percentage">${cert.percentage}%</span></td>
+                        <td>${new Date(cert.issueDate).toLocaleDateString('en-GB')}</td>
+                        <td>
+                            <a href="/admin/download/${cert.id}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Auto-apply filters on input change
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterInputs = document.querySelectorAll('#sectionFilter, #yearFilter, #branchFilter, #titleFilter, #rollNumberFilter');
+            filterInputs.forEach(input => {
+                input.addEventListener('change', applyFilters);
+                if (input.type === 'text') {
+                    input.addEventListener('input', debounce(applyFilters, 500));
+                }
+            });
+        });
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+</body>
+</html>

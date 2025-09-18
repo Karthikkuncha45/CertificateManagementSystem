@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Certificate Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .profile-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-gradient {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            margin: 0 auto 1rem;
+        }
+        
+        /* Password Toggle Styles */
+        .password-field {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            color: #6c757d;
+            cursor: pointer;
+            z-index: 10;
+            padding: 5px;
+        }
+        
+        .password-toggle:hover {
+            color: #667eea;
+        }
+        
+        .password-field .form-control {
+            padding-right: 45px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: var(--primary-gradient);">
+        <div class="container">
+            <a class="navbar-brand fw-bold" th:href="@{/dashboard}">
+                <i class="bi bi-award-fill me-2"></i>Certificate Manager
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" th:href="@{/dashboard}">
+                    <i class="bi bi-house-fill me-1"></i>Dashboard
+                </a>
+                <a class="nav-link active" th:href="@{/profile}">
+                    <i class="bi bi-person-fill me-1"></i>Profile
+                </a>
+                <a class="nav-link" th:href="@{/logout}">
+                    <i class="bi bi-box-arrow-right me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Header -->
+    <div class="profile-header text-center">
+        <div class="container">
+            <div class="profile-avatar">
+                <span th:text="${user.fullName.substring(0,1).toUpperCase()}">U</span>
+            </div>
+            <h2 class="fw-bold mb-0" th:text="${user.fullName}">User Name</h2>
+            <p class="mb-0" th:text="${user.rollNumber}">Roll Number</p>
+            <p class="mb-0" th:text="${user.branch + ' - ' + user.studyingYear + ' Year'}">Branch - Year</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Alert Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row">
+            <!-- Update Profile Card -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h4 class="card-title mb-0">
+                            <i class="bi bi-person-gear me-2 text-primary"></i>Update Profile
+                        </h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/profile/update}" th:object="${user}" method="post">
+                            <!-- Hidden field to preserve user ID -->
+                            <input type="hidden" th:field="*{id}" />
+                            <input type="hidden" th:field="*{rollNumber}" />
+                            <input type="hidden" th:field="*{role}" />
+                            <input type="hidden" th:field="*{enabled}" />
+                            <input type="hidden" th:field="*{createdAt}" />
+                            <input type="hidden" th:field="*{password}" />
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fullName" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="fullName" 
+                                           th:field="*{fullName}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" 
+                                           th:field="*{email}" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phoneNumber" 
+                                           th:field="*{phoneNumber}" pattern="[0-9]{10}" 
+                                           title="Please enter a valid 10-digit phone number" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="studyingYear" class="form-label">Studying Year</label>
+                                    <select class="form-control" id="studyingYear" th:field="*{studyingYear}" required>
+                                        <option value="">Select Year</option>
+                                        <option value="1">1st Year</option>
+                                        <option value="2">2nd Year</option>
+                                        <option value="3">3rd Year</option>
+                                        <option value="4">4th Year</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="branch" class="form-label">Branch</label>
+                                    <select class="form-control" id="branch" th:field="*{branch}" required>
+                                        <option value="">Select Branch</option>
+                                        <option value="AIML">AIML</option>
+                                        <option value="CSE(AIML)">CSE(AIML)</option>
+                                        <option value="CSE(CS)">CSE(CS)</option>
+                                        <option value="CSE(DS)">CSE(DS)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="section" class="form-label">Section</label>
+                                    <select class="form-control" id="section" th:field="*{section}" required>
+                                        <option value="">Select Section</option>
+                                        <option value="A">Section A</option>
+                                        <option value="B">Section B</option>
+                                        <option value="C">Section C</option>
+                                        <option value="D">Section D</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="currentPassword" class="form-label">Current Password</label>
+                                <div class="password-field">
+                                    <input type="password" class="form-control" id="currentPassword" 
+                                           name="currentPassword" required
+                                           placeholder="Enter your current password to confirm changes">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('currentPassword')">
+                                        <i class="bi bi-eye" id="currentPassword-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-gradient btn-lg">
+                                    <i class="bi bi-check-circle me-2"></i>Update Profile
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password Card -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-shield-lock me-2 text-warning"></i>Change Password
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/profile/change-password}" method="post">
+                            <div class="mb-3">
+                                <label for="currentPasswordChange" class="form-label">Current Password</label>
+                                <div class="password-field">
+                                    <input type="password" class="form-control" id="currentPasswordChange" 
+                                           name="currentPassword" required>
+                                    <button type="button" class="password-toggle" onclick="togglePassword('currentPasswordChange')">
+                                        <i class="bi bi-eye" id="currentPasswordChange-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">New Password</label>
+                                <div class="password-field">
+                                    <input type="password" class="form-control" id="newPassword" 
+                                           name="newPassword" required minlength="6">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('newPassword')">
+                                        <i class="bi bi-eye" id="newPassword-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                <div class="password-field">
+                                    <input type="password" class="form-control" id="confirmPassword" 
+                                           name="confirmPassword" required minlength="6">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                        <i class="bi bi-eye" id="confirmPassword-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-key me-2"></i>Change Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Account Info Card -->
+                <div class="card mt-4">
+                    <div class="card-header bg-white">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-info-circle me-2 text-info"></i>Account Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <small class="text-muted">Roll Number</small>
+                            <div th:text="${user.rollNumber}">Roll Number</div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Account Status</small>
+                            <div>
+                                <span class="badge bg-success" th:if="${user.enabled}">Active</span>
+                                <span class="badge bg-danger" th:unless="${user.enabled}">Inactive</span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Account Type</small>
+                            <div>
+                                <span class="badge bg-primary" th:text="${user.role}">Role</span>
+                            </div>
+                        </div>
+                        <div>
+                            <small class="text-muted">Member Since</small>
+                            <div th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}">Date</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Password toggle function
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleIcon = document.getElementById(fieldId + '-icon');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.classList.remove('bi-eye');
+                toggleIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.classList.remove('bi-eye-slash');
+                toggleIcon.classList.add('bi-eye');
+            }
+        }
+        
+        // Password confirmation validation
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = this.value;
+            
+            if (newPassword !== confirmPassword) {
+                this.setCustomValidity('Passwords do not match');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+
+        // Debug: Log current user data
+        console.log('Current user data:', {
+            id: '[[${user.id}]]',
+            fullName: '[[${user.fullName}]]',
+            email: '[[${user.email}]]',
+            rollNumber: '[[${user.rollNumber}]]'
+        });
+    </script>
+</body>
+</html>
